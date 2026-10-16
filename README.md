@@ -19,3 +19,7 @@ The live site currently uses a **2025 historical player directory** for autocomp
 A separate `data/players-2026.json` file is initially empty with `status: not-populated`. The manual ingestion command is `python scripts/build_2026_players.py`. It requests all 32 ESPN public team rosters, requires an explicit 2026 season and a minimum completeness threshold, and aborts rather than writing a partial dataset. Each record includes a source URL and UTC verification timestamp. The script has **not yet been run or validated against live 2026 responses**. No scheduled data refresh or automatic publication is configured. Verify source usage rights and response structure before automating.
 
 Do not describe the 2026 data as live, verified, or connected until the ingestion has actually succeeded and the consumer pages are wired to it.
+
+### Offline validation
+
+Run `python -m unittest discover -s tests -v` before attempting any ingestion. The test suite uses synthetic 32-team fixtures, does not call ESPN, and checks successful snapshots plus stale-season and unavailable-team failures. These tests do not prove the external API currently works; a live ingestion and separate roster spot-check are required before switching the app to 2026 data. No automated GitHub Actions job is enabled, to avoid unapproved CI costs.
