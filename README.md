@@ -1,25 +1,33 @@
 # Fantasy Desk
 
-Standalone historical fantasy football draft and season replay pilot.
+Fantasy football team management and player research, with separate optional historical games.
 
-## Deployment
+## Deployment and current state
 
-Static site on Render. Publish directory: `.`. Build command: `echo Static site`.
+This repository is a static site. Publish directory: `.`; build command: `echo Static site`.
 
-## Current pilot
+`index.html` is the current entry page. Do not require `launch.html` for deployment: it is absent from the current default branch. Historical references to a Sprint 14 launch flow are not verified as the deployed experience.
 
-The tested local Sprint 14 build must be uploaded before creating the public site. Required assets include `launch.html`, `time-machine.html`, `index.html`, `historical.js`, `players.js`, and `engine.js`.
+Current entry points include `my-teams.html`, `player-research.html`, `time-machine.html`, and `draft-lab.html`. The team management interface currently stores data locally in the browser; ESPN synchronization and screenshot import must not be claimed as working without live end-to-end verification.
 
-NFLI and Betline remain separate; no production services are modified.
+## Recovery and compatibility
+
+Preserve the original Fantasy Desk team-management experience and both ESPN league identities. Never substitute Time Machine or Draft Lab for My Teams. Treat the October 16, 2026 `fantasy-desk-backup.json` export as a recovery candidate, not automatically as newer than live browser state. Verify roster completeness, scoring configuration, screenshot attachments, and import behavior before restoration. Do not overwrite user data without explicit approval.
+
+NFLI and Betline remain separate applications. Their integration is research-only until source freshness, validation and connectivity are demonstrated.
 
 ## 2026 roster data pipeline
 
-The live site currently uses a **2025 historical player directory** for autocomplete and retrospective research. It does **not** assert that 2025 teams, player positions, or fantasy points are current.
+The historical `players.js` directory contains 2025 season data and must not be presented as verified 2026 statistics or roster status.
 
-A separate `data/players-2026.json` file is initially empty with `status: not-populated`. The manual ingestion command is `python scripts/build_2026_players.py`. It requests all 32 ESPN public team rosters, requires an explicit 2026 season and a minimum completeness threshold, and aborts rather than writing a partial dataset. Each record includes a source URL and UTC verification timestamp. The script has **not yet been run or validated against live 2026 responses**. No scheduled data refresh or automatic publication is configured. Verify source usage rights and response structure before automating.
+`data/players-2026.json` and `scripts/build_2026_players.py` support a separate provenance-aware roster ingestion workflow. The ingestion requires all 32 ESPN public team rosters, an explicit 2026 season, a completeness threshold, source URLs and verification timestamps. A partial or stale response must fail closed. The existence of code or a commit is not proof that live ingestion succeeded.
 
-Do not describe the 2026 data as live, verified, or connected until the ingestion has actually succeeded and the consumer pages are wired to it.
+Run `python -m unittest discover -s tests -v` for offline synthetic-fixture validation. Live ESPN ingestion, representative spot checks, and deployed-page validation are separate gates. No GitHub Actions automation is required or approved.
 
-### Offline validation
+## Recovery acceptance checks
 
-Run `python -m unittest discover -s tests -v` before attempting any ingestion. The test suite uses synthetic 32-team fixtures, does not call ESPN, and checks successful snapshots plus stale-season and unavailable-team failures. These tests do not prove the external API currently works; a live ingestion and separate roster spot-check are required before switching the app to 2026 data. No automated GitHub Actions job is enabled, to avoid unapproved CI costs.
+1. Verify deployed build identity against the default-branch commit.
+2. Import a copy of the October 16 backup into an isolated test context; never replace the only saved roster.
+3. Confirm both teams, scoring rules, starters, bench, IR, and screenshots survive export/import round trip.
+4. Verify mobile screenshot upload and explicit user review before roster changes.
+5. Confirm 2026 research is source-verified and freshness-labeled; historical fallbacks are clearly identified.
