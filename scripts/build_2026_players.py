@@ -30,7 +30,6 @@ def main():
                 if isinstance(group,dict) and isinstance(group.get("items"),list):flat+=group["items"]
                 elif isinstance(group,dict) and group.get("id"):flat.append(group)
             if len(flat)<20:raise ValueError("Too few athletes")
-            successful_teams+=1
             for a in flat:
                 aid=str(a.get("id",""));name=a.get("fullName") or a.get("displayName")
                 pos=a.get("position",{}).get("abbreviation") if isinstance(a.get("position"),dict) else None
@@ -38,6 +37,7 @@ def main():
                 if aid in seen:raise ValueError("Duplicate athlete id "+aid)
                 seen.add(aid)
                 records.append({"id":"espn:"+aid,"name":name,"pos":pos,"team":abbr,"season":2026,"source":BASE+"/teams/"+str(tid)+"/roster","checkedAt":now})
+            successful_teams+=1
         except Exception as exc:errors.append(abbr+": "+str(exc))
     if errors or successful_teams!=32 or len(records)<1000:raise RuntimeError("Refusing partial catalog: "+repr(errors)+"; players="+str(len(records)))
     output={"season":2026,"generatedAt":now,"source":"ESPN public NFL team roster endpoints","status":"verified-source-snapshot","teamsChecked":successful_teams,"players":sorted(records,key=lambda p:(p["name"],p["id"]))}
