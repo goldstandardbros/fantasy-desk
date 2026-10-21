@@ -27,6 +27,15 @@ class RosterTests(unittest.TestCase):
         self.assertTrue(all(p["source"] and p["checkedAt"] for p in data["players"]))
     def test_reject_old_season(self):
         with self.assertRaises(RuntimeError):self.run_build(season=2025)
+    def test_reject_duplicate_team_ids(self):
+        original=mod.fetch
+        def duplicate(url):
+            data=response(url)
+            if url.endswith("/teams"):
+                data["sports"][0]["leagues"][0]["teams"][1]["team"]["id"]="1"
+            return data
+        with patch.object(mod,"fetch",side_effect=duplicate):
+            with self.assertRaises(RuntimeError):mod.main()
     def test_reject_missing_team(self):
         with self.assertRaises(RuntimeError):self.run_build(missing=4)
 if __name__=="__main__":unittest.main()
