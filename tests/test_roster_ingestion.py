@@ -76,6 +76,22 @@ class RosterTests(unittest.TestCase):
             return data
         with patch.object(mod,"fetch",side_effect=missing_id):
             with self.assertRaises(RuntimeError):mod.main()
+    def test_reject_nonnumeric_athlete_id(self):
+        def invalid_id(url):
+            data=response(url)
+            if url.endswith('/2/roster'):
+                data['athletes'][0]['items'][0]['id']='unknown'
+            return data
+        with patch.object(mod,'fetch',side_effect=invalid_id):
+            with self.assertRaises(RuntimeError):mod.main()
+    def test_reject_blank_athlete_name(self):
+        def blank_name(url):
+            data=response(url)
+            if url.endswith('/2/roster'):
+                data['athletes'][0]['items'][0]['fullName']='  '
+            return data
+        with patch.object(mod,'fetch',side_effect=blank_name):
+            with self.assertRaises(RuntimeError):mod.main()
     def test_reject_missing_team(self):
         with self.assertRaises(RuntimeError):self.run_build(missing=4)
 if __name__=="__main__":unittest.main()
