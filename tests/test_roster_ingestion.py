@@ -52,6 +52,14 @@ class RosterTests(unittest.TestCase):
             return data
         with patch.object(mod,"fetch",side_effect=duplicate_athlete):
             with self.assertRaises(RuntimeError):mod.main()
+    def test_reject_missing_athlete_id(self):
+        def missing_id(url):
+            data=response(url)
+            if url.endswith("/2/roster"):
+                data["athletes"][0]["items"][0]["id"]=None
+            return data
+        with patch.object(mod,"fetch",side_effect=missing_id):
+            with self.assertRaises(RuntimeError):mod.main()
     def test_reject_missing_team(self):
         with self.assertRaises(RuntimeError):self.run_build(missing=4)
 if __name__=="__main__":unittest.main()
