@@ -57,3 +57,8 @@ Monday and Thursday integration audits check GitHub/Render drift, ESPN/NFL fresh
 - Ran `python -m unittest discover -s tests -v`: **6 tests passed** (synthetic fixtures, 0.019 seconds). No GitHub Actions minutes used.
 - Attempted live ESPN public roster request from the local runtime; DNS failed (`Temporary failure in name resolution`). Live ingestion remains **not verified**.
 - Production and user rosters were not modified.
+
+## October 21 strict athlete completeness repair
+- Changed ingestion to fail closed when any athlete lacks an ID, name or position, rather than silently dropping that record.
+- Added synthetic regression test `test_reject_missing_athlete_id` (pending execution).
+- No current-season dataset was fabricated or deployed. Live ESPN access, private league access, and NFLI bridge remain unverified.
