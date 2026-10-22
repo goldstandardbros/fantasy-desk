@@ -74,3 +74,9 @@ Monday and Thursday integration audits check GitHub/Render drift, ESPN/NFL fresh
 - Restore confirmation explicitly asks for a current backup export first.
 - Backup import now rejects duplicate team IDs, duplicate normalized player names, empty names and invalid player positions before confirmation.
 - All changes remain on the stabilization branch; browser execution, cross-device persistence and production acceptance are pending.
+
+## October 22 three-task roster compatibility sprint
+- Expanded shared player validation to include standard NFL defensive, line and special-teams positions so full-team roster snapshots are not rejected solely for nonfantasy players.
+- Player Research now filters verified full-roster snapshots to QB/RB/WR/TE/K/D-ST for fantasy-facing search, while retaining the complete snapshot for integrity checks.
+- Added synthetic regression `test_full_roster_includes_nonfantasy_positions`; committed but not executed in this session.
+- Caveat: ESPN may return additional position abbreviations; live schema/roster validation remains necessary. No production release or private ESPN sync verified.
