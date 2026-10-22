@@ -51,3 +51,9 @@ Monday and Thursday integration audits check GitHub/Render drift, ESPN/NFL fresh
 - Added duplicate-abbreviation regression test; execution in this session is **not verified** because the local runtime cannot resolve github.com to retrieve the repository. Do not mark this test passed until it runs in a network-enabled checkout.
 - Published 2026 catalog on main was `not-populated` with zero players at inspection; no live roster snapshot has been published.
 - No production deployment or personal roster modifications performed.
+
+## October 21 isolated regression execution
+- Reconstructed the stabilization branch's ingestion script and test module in an isolated local checkout from connector-returned source text.
+- Ran `python -m unittest discover -s tests -v`: **6 tests passed** (synthetic fixtures, 0.019 seconds). No GitHub Actions minutes used.
+- Attempted live ESPN public roster request from the local runtime; DNS failed (`Temporary failure in name resolution`). Live ingestion remains **not verified**.
+- Production and user rosters were not modified.
