@@ -41,6 +41,15 @@ class RosterTests(unittest.TestCase):
         self.assertEqual(len(data['players']),1280)
         self.assertIn('OT',{p['pos'] for p in data['players']})
         self.assertIn('CB',{p['pos'] for p in data['players']})
+    def test_failure_preserves_existing_catalog(self):
+        with tempfile.TemporaryDirectory() as root:
+            base=pathlib.Path(root)
+            (base/'scripts').mkdir();(base/'data').mkdir()
+            target=base/'data'/'players-2026.json'
+            target.write_text('{"previous":"safe"}\n')
+            with patch.object(mod,'__file__',str(base/'scripts'/'build_2026_players.py')),patch.object(mod,'fetch',side_effect=lambda url:response(url,2025)):
+                with self.assertRaises(RuntimeError):mod.main()
+            self.assertEqual(target.read_text(),'{"previous":"safe"}\n')
     def test_reject_old_season(self):
         with self.assertRaises(RuntimeError):self.run_build(season=2025)
     def test_reject_duplicate_team_ids(self):
