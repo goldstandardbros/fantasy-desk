@@ -14,6 +14,8 @@ def main():
     items=teams[0]["leagues"][0]["teams"] if teams else []
     if len(items)!=32: raise RuntimeError(f"Expected 32 NFL teams, got {len(items)}")
     if len({str(x.get("team",{}).get("id")) for x in items})!=32: raise RuntimeError("Duplicate NFL team IDs")
+    abbreviations=[str(x.get("team",{}).get("abbreviation") or "").strip() for x in items]
+    if not all(abbreviations) or len(set(abbreviations))!=32: raise RuntimeError("Missing or duplicate NFL team abbreviations")
     now=datetime.datetime.now(datetime.timezone.utc).isoformat()
     records=[];errors=[];seen=set();successful_teams=0
     for item in items:
@@ -31,7 +33,7 @@ def main():
                 elif isinstance(group,dict) and group.get("id"):flat.append(group)
             if len(flat)<20:raise ValueError("Too few athletes")
             for a in flat:
-                aid=str(a.get("id",""));name=a.get("fullName") or a.get("displayName")
+                aid=str(a.get("id") or "").strip();name=a.get("fullName") or a.get("displayName")
                 pos=a.get("position",{}).get("abbreviation") if isinstance(a.get("position"),dict) else None
                 if not aid or not name or not pos:continue
                 if aid in seen:raise ValueError("Duplicate athlete id "+aid)
