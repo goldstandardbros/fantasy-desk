@@ -35,7 +35,7 @@ def main():
             for a in flat:
                 aid=str(a.get("id") or "").strip();name=a.get("fullName") or a.get("displayName")
                 pos=a.get("position",{}).get("abbreviation") if isinstance(a.get("position"),dict) else None
-                if not aid or not name or not pos:continue
+                if not aid or not name or not pos:raise ValueError("Missing athlete id/name/position")
                 if aid in seen:raise ValueError("Duplicate athlete id "+aid)
                 seen.add(aid)
                 records.append({"id":"espn:"+aid,"name":name,"pos":pos,"team":abbr,"season":2026,"source":BASE+"/teams/"+str(tid)+"/roster","checkedAt":now})
