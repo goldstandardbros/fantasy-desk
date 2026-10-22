@@ -86,3 +86,9 @@ Monday and Thursday integration audits check GitHub/Render drift, ESPN/NFL fresh
 - Python ingestion now rejects nonnumeric ESPN IDs and blank names/positions, matching browser-side assumptions.
 - Added synthetic regression cases for invalid ESPN IDs and blank athlete names; not executed in this sprint.
 - Remain blocked on real ESPN 2026 roster verification, browser acceptance, private league authorization and NFLI integration. No production changes.
+
+## October 22 roster publication integrity sprint
+- Catalog publishing now writes and fsyncs a temporary file in the destination directory, then atomically replaces the catalog; failed validation does not touch the previous file.
+- Added regression test verifying a 2025-source rejection preserves an existing catalog. Test execution remains pending.
+- Team listing now rejects missing, nonnumeric or duplicate NFL team IDs before fetching 32 rosters.
+- All work is committed to stabilization branch only; live provider, browser acceptance and production release remain unverified.
