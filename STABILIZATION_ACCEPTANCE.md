@@ -80,3 +80,9 @@ Monday and Thursday integration audits check GitHub/Render drift, ESPN/NFL fresh
 - Player Research now filters verified full-roster snapshots to QB/RB/WR/TE/K/D-ST for fantasy-facing search, while retaining the complete snapshot for integrity checks.
 - Added synthetic regression `test_full_roster_includes_nonfantasy_positions`; committed but not executed in this session.
 - Caveat: ESPN may return additional position abbreviations; live schema/roster validation remains necessary. No production release or private ESPN sync verified.
+
+## October 22 ESPN identity contract sprint
+- Shared player identity validation requires `espn:<numeric athlete ID>` and a nonempty NFL team.
+- Python ingestion now rejects nonnumeric ESPN IDs and blank names/positions, matching browser-side assumptions.
+- Added synthetic regression cases for invalid ESPN IDs and blank athlete names; not executed in this sprint.
+- Remain blocked on real ESPN 2026 roster verification, browser acceptance, private league authorization and NFLI integration. No production changes.
