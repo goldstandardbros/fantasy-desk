@@ -92,3 +92,9 @@ Monday and Thursday integration audits check GitHub/Render drift, ESPN/NFL fresh
 - Added regression test verifying a 2025-source rejection preserves an existing catalog. Test execution remains pending.
 - Team listing now rejects missing, nonnumeric or duplicate NFL team IDs before fetching 32 rosters.
 - All work is committed to stabilization branch only; live provider, browser acceptance and production release remain unverified.
+
+## Operational repair: My Teams safety (October 22)
+- Startup validation now rejects unsupported fantasy positions in persisted roster entries.
+- Backup import checks file presence and refuses files larger than 2 MiB before parsing, retaining the existing transactional storage write and explicit replace confirmation.
+- Chromium exists locally, but navigation to a minimal data URL returned `net::ERR_BLOCKED_BY_ADMINISTRATOR`; this is not a passed browser acceptance test.
+- ESPN live roster fetch and Render site browser navigation are not verified in this environment. Keep stabilization branch separate from production until browser acceptance, real data coverage, and end-to-end My Teams persistence are verified.
