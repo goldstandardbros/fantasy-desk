@@ -13,7 +13,8 @@ def main():
     teams=fetch(BASE+"/teams").get("sports",[])
     items=teams[0]["leagues"][0]["teams"] if teams else []
     if len(items)!=32: raise RuntimeError(f"Expected 32 NFL teams, got {len(items)}")
-    if len({str(x.get("team",{}).get("id")) for x in items})!=32: raise RuntimeError("Duplicate NFL team IDs")
+    team_ids=[str(x.get("team",{}).get("id") or "").strip() for x in items]
+    if not all(x.isdigit() for x in team_ids) or len(set(team_ids))!=32: raise RuntimeError("Missing, invalid or duplicate NFL team IDs")
     abbreviations=[str(x.get("team",{}).get("abbreviation") or "").strip() for x in items]
     if not all(abbreviations) or len(set(abbreviations))!=32: raise RuntimeError("Missing or duplicate NFL team abbreviations")
     now=datetime.datetime.now(datetime.timezone.utc).isoformat()
