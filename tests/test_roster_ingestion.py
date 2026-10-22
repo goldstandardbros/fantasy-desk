@@ -36,6 +36,14 @@ class RosterTests(unittest.TestCase):
             return data
         with patch.object(mod,"fetch",side_effect=duplicate):
             with self.assertRaises(RuntimeError):mod.main()
+    def test_reject_duplicate_abbreviations(self):
+        def duplicate_abbr(url):
+            data=response(url)
+            if url.endswith("/teams"):
+                data["sports"][0]["leagues"][0]["teams"][1]["team"]["abbreviation"]="T1"
+            return data
+        with patch.object(mod,"fetch",side_effect=duplicate_abbr):
+            with self.assertRaises(RuntimeError):mod.main()
     def test_reject_duplicate_athlete_ids(self):
         def duplicate_athlete(url):
             data=response(url)
