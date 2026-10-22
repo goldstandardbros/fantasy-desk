@@ -68,3 +68,9 @@ Monday and Thursday integration audits check GitHub/Render drift, ESPN/NFL fresh
 - Restored selected-team IDs are checked against imported team IDs; invalid selections become null.
 - Existing browser data is shape-checked before loading; malformed records fall back to an empty in-memory state without overwriting the original stored bytes.
 - These are branch-only code changes. Real browser backup round-trip, storage quota, and iPhone persistence acceptance remain unverified; no production deployment.
+
+## Browser safety follow-up
+- Startup loading now checks roster length and player row shape before rendering; malformed saved data is not automatically overwritten.
+- Restore confirmation explicitly asks for a current backup export first.
+- Backup import now rejects duplicate team IDs, duplicate normalized player names, empty names and invalid player positions before confirmation.
+- All changes remain on the stabilization branch; browser execution, cross-device persistence and production acceptance are pending.
