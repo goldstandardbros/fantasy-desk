@@ -62,3 +62,9 @@ Monday and Thursday integration audits check GitHub/Render drift, ESPN/NFL fresh
 - Changed ingestion to fail closed when any athlete lacks an ID, name or position, rather than silently dropping that record.
 - Added synthetic regression test `test_reject_missing_athlete_id` (pending execution).
 - No current-season dataset was fabricated or deployed. Live ESPN access, private league access, and NFLI bridge remain unverified.
+
+## My Teams browser persistence repair
+- Backup import now writes storage before changing the in-memory team selection; failed storage writes preserve the previous in-memory teams.
+- Restored selected-team IDs are checked against imported team IDs; invalid selections become null.
+- Existing browser data is shape-checked before loading; malformed records fall back to an empty in-memory state without overwriting the original stored bytes.
+- These are branch-only code changes. Real browser backup round-trip, storage quota, and iPhone persistence acceptance remain unverified; no production deployment.
