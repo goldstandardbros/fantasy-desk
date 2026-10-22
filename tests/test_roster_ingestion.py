@@ -25,6 +25,22 @@ class RosterTests(unittest.TestCase):
         self.assertEqual(len(data["players"]),1280)
         self.assertEqual(data["teamsChecked"],32)
         self.assertTrue(all(p["source"] and p["checkedAt"] for p in data["players"]))
+    def test_full_roster_includes_nonfantasy_positions(self):
+        def mixed_positions(url):
+            data=response(url)
+            if url.endswith('/1/roster'):
+                data['athletes'][0]['items'][0]['position']['abbreviation']='OT'
+                data['athletes'][0]['items'][1]['position']['abbreviation']='CB'
+            return data
+        with tempfile.TemporaryDirectory() as root:
+            base=pathlib.Path(root)
+            (base/'scripts').mkdir();(base/'data').mkdir()
+            with patch.object(mod,'__file__',str(base/'scripts'/'build_2026_players.py')),patch.object(mod,'fetch',side_effect=mixed_positions):
+                mod.main()
+            data=json.loads((base/'data'/'players-2026.json').read_text())
+        self.assertEqual(len(data['players']),1280)
+        self.assertIn('OT',{p['pos'] for p in data['players']})
+        self.assertIn('CB',{p['pos'] for p in data['players']})
     def test_reject_old_season(self):
         with self.assertRaises(RuntimeError):self.run_build(season=2025)
     def test_reject_duplicate_team_ids(self):
