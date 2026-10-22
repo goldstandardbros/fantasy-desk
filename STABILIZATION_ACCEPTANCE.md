@@ -45,3 +45,9 @@ Monday and Thursday integration audits check GitHub/Render drift, ESPN/NFL fresh
 - Private ESPN league synchronization is not verified.
 - NFLI consumption is not demonstrated in deployed Fantasy Desk.
 - Live 2026 roster ingestion and user-device acceptance remain unverified.
+
+## October 21 additional repair evidence
+- Added duplicate NFL abbreviation validation and missing-athlete-ID normalization on the stabilization branch.
+- Added duplicate-abbreviation regression test; execution in this session is **not verified** because the local runtime cannot resolve github.com to retrieve the repository. Do not mark this test passed until it runs in a network-enabled checkout.
+- Published 2026 catalog on main was `not-populated` with zero players at inspection; no live roster snapshot has been published.
+- No production deployment or personal roster modifications performed.
