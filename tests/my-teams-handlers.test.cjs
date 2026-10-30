@@ -20,10 +20,10 @@ async function app(data,{root=ROOT}={}){
     for(const v of values)elements.get(id).add(new Option(v,v));elements.get(id).value=values[0];
   }
   const storage=new Map([[KEY,JSON.stringify(data)]]),dialogs=[],blobs=new Map(),downloads=[];
-  const state={confirm:true,dialogs,elements,storage,downloads,failWrite:false};
+  const state={confirm:true,dialogs,elements,storage,downloads,failWrite:false,prompts:[]};
   const document={getElementById:id=>elements.get(id),createElement:tag=>{const e=new Element(tag);if(tag==='a')e.click=()=>downloads.push(blobs.get(e.href));return e}};
   const sandbox={document,Option,Blob,console,setTimeout:fn=>fn(),localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>{if(state.failWrite)throw Error('Synthetic storage write failure');storage.set(k,v)}},
-    confirm:message=>{dialogs.push(message);return state.confirm},alert:message=>dialogs.push(message),prompt:()=>null,
+    confirm:message=>{dialogs.push(message);return state.confirm},alert:message=>dialogs.push(message),prompt:()=>state.prompts.shift()??null,
     URL:{createObjectURL:blob=>{const id='blob:'+blobs.size;blobs.set(id,blob);return id},revokeObjectURL:()=>{}},
     fetch:async()=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(root,'data/players-2026.json'),'utf8'))})};
   sandbox.window=sandbox;vm.createContext(sandbox);
@@ -110,4 +110,56 @@ test('backup write may be retried after failure without requiring reload or losi
   assert.match(a.message(),/Backup restored/);
   assert.match(a.el('lineupIssues').textContent,/unverified/);
   a.el('export').onclick();assert.deepEqual(JSON.parse(await a.downloads.at(-1).text()),replacement);
+});
+
+const mutations={
+  rename:a=>{a.prompts=['New name','New league'];a.el('renameTeam').onclick()},
+  deleteTeam:a=>a.el('deleteTeam').onclick(),
+  createTeam:a=>{a.el('new').onclick();a.el('teamName').value='New team';a.el('saveTeam').onclick()},
+  selectTeam:a=>{a.el('teams').value='second';a.el('teams').onchange()},
+  addPlayer:a=>a.add('Added player','RB','Bench'),
+  movePlayer:a=>a.move(0,'WR1'),
+  removePlayer:a=>a.el('roster').children[0].children[4].children[0].onclick(),
+  bulkImport:a=>{a.el('bulk').value='Bulk player,RB,,Bench';a.el('bulkAdd').onclick()}
+};
+for(const [name,mutate] of Object.entries(mutations))test('storage failure preserves state and allows retry: '+name,async()=>{
+  const original=fixture([player('Original player','WR')]);
+  original.teams.push({id:'second',name:'Second team',league:'Synthetic',roster:[]});
+  original.teams[0].scoring={ppr:0.5};
+  const a=await app(original),before=a.storage.get(KEY);
+  a.failWrite=true;mutate(a);
+  assert.match(a.message(),/Could not save local change: Synthetic storage write failure/);
+  assert.equal(a.storage.get(KEY),before);
+  assert.equal(a.el('heading').textContent,'Fixture Team — Roster');
+  assert.equal(a.el('teams').value,'fixture');
+  a.el('export').onclick();assert.deepEqual(JSON.parse(await a.downloads.at(-1).text()),original);
+  a.failWrite=false;mutate(a);
+  assert.notDeepEqual(a.read(),original);
+  a.el('export').onclick();assert.deepEqual(JSON.parse(await a.downloads.at(-1).text()),a.read());
+  const reopened=await app(a.read());assert.deepEqual(reopened.read(),a.read());
+});
+for(const [name,mutate] of Object.entries(mutations))test('failed '+name+' cannot leak into a subsequent unrelated save',async()=>{
+  const original=fixture([player('Original player','WR')]);
+  original.teams.push({id:'second',name:'Second team',league:'Synthetic',roster:[]});
+  const a=await app(original);a.failWrite=true;mutate(a);a.failWrite=false;
+  a.add('Later player','QB','Bench');
+  const expected=structuredClone(original);expected.teams[0].roster.push(player('Later player','QB'));
+  assert.deepEqual(a.read(),expected);
+});
+test('failed exit from recovered IR preserves unverified placement until retry succeeds',async()=>{
+  const original=fixture([player('Recovered player','RB','IR')]),a=await app(original);
+  a.failWrite=true;a.move(0,'Bench');assert.deepEqual(a.read(),original);
+  assert.match(a.el('lineupIssues').textContent,/unverified/);
+  a.el('export').onclick();assert.deepEqual(JSON.parse(await a.downloads.at(-1).text()),original);
+  a.failWrite=false;a.move(0,'Bench');assert.equal(a.read().teams[0].roster[0].slot,'Bench');
+});
+
+test('first-team storage failure keeps inputs for retry and feedback outside hidden roster panel',async()=>{
+  const empty={teams:[],selected:null},a=await app(empty);
+  a.el('new').onclick();a.el('teamName').value='First team';a.failWrite=true;a.el('saveTeam').onclick();
+  assert.deepEqual(a.read(),empty);assert.equal(a.el('teamForm').hidden,false);
+  assert.equal(a.el('teamName').value,'First team');assert.match(a.message(),/Could not save/);
+  const html=fs.readFileSync(path.join(ROOT,'my-teams.html'),'utf8');
+  assert.match(html,/<\/section><p id="message" role="status">/);
+  a.failWrite=false;a.el('saveTeam').onclick();assert.equal(a.read().teams[0].name,'First team');
 });
