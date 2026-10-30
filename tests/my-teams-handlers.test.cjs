@@ -20,9 +20,9 @@ async function app(data,{root=ROOT}={}){
     for(const v of values)elements.get(id).add(new Option(v,v));elements.get(id).value=values[0];
   }
   const storage=new Map([[KEY,JSON.stringify(data)]]),dialogs=[],blobs=new Map(),downloads=[];
-  const state={confirm:true,dialogs,elements,storage,downloads};
+  const state={confirm:true,dialogs,elements,storage,downloads,failWrite:false};
   const document={getElementById:id=>elements.get(id),createElement:tag=>{const e=new Element(tag);if(tag==='a')e.click=()=>downloads.push(blobs.get(e.href));return e}};
-  const sandbox={document,Option,Blob,console,setTimeout:fn=>fn(),localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},
+  const sandbox={document,Option,Blob,console,setTimeout:fn=>fn(),localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>{if(state.failWrite)throw Error('Synthetic storage write failure');storage.set(k,v)}},
     confirm:message=>{dialogs.push(message);return state.confirm},alert:message=>dialogs.push(message),prompt:()=>null,
     URL:{createObjectURL:blob=>{const id='blob:'+blobs.size;blobs.set(id,blob);return id},revokeObjectURL:()=>{}},
     fetch:async()=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(root,'data/players-2026.json'),'utf8'))})};
@@ -84,4 +84,30 @@ if(process.env.BASELINE_ROOT)test('baseline evidence: old handler permits QB FLE
   const output=a.read();assert.deepEqual(output.teams[0].roster.map(p=>p.slot),['FLEX','Bench']);
   const repaired=await app(input);repaired.move(0,'FLEX');assert.deepEqual(repaired.read(),input);
   if(process.env.FIXTURE_REPORT)fs.writeFileSync(process.env.FIXTURE_REPORT,JSON.stringify({kind:'synthetic fixture; actual old/new inline handlers',input,oldOutput:output,newOutput:repaired.read(),newMessage:repaired.message(),expectedRejectedAction:'QB to FLEX'},null,2));
+});
+
+test('failed backup write preserves persisted and in-memory roster before any later save',async()=>{
+  const original=fixture([player('Original player','WR')]),replacement=fixture([player('Replacement player','RB')]);
+  replacement.teams[0].name='Replacement Team';
+  const a=await app(original),before=a.storage.get(KEY);
+  a.failWrite=true;await a.import(replacement);
+  assert.match(a.message(),/Could not import backup: Synthetic storage write failure/);
+  assert.equal(a.storage.get(KEY),before);
+  assert.equal(a.el('heading').textContent,'Fixture Team — Roster');
+  a.el('export').onclick();
+  assert.deepEqual(JSON.parse(await a.downloads.at(-1).text()),original,'failed import must not replace the in-memory export');
+  a.failWrite=false;a.add('Later local player','QB','Bench');
+  assert.deepEqual(a.read().teams[0].roster.map(p=>p.name),['Original player','Later local player']);
+  assert.equal(a.read().teams[0].name,'Fixture Team');
+});
+test('backup write may be retried after failure without requiring reload or losing metadata',async()=>{
+  const original=fixture([player('Original player','WR')]),replacement=fixture([player('Replacement player','RB','IR')]);
+  replacement.teams[0].scoring={ppr:0.5};replacement.teams[0].screenshots=['synthetic-only.png'];
+  const a=await app(original);a.failWrite=true;await a.import(replacement);
+  assert.deepEqual(a.read(),original);
+  a.failWrite=false;await a.import(replacement);
+  assert.deepEqual(a.read(),replacement);
+  assert.match(a.message(),/Backup restored/);
+  assert.match(a.el('lineupIssues').textContent,/unverified/);
+  a.el('export').onclick();assert.deepEqual(JSON.parse(await a.downloads.at(-1).text()),replacement);
 });
